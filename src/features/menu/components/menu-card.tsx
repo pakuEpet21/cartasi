@@ -3,11 +3,15 @@ import { useFlag } from "@/features/flags";
 import { formatPrice } from "@/shared/lib/format";
 import { ALLERGEN_LABELS, type MenuItem } from "../types";
 import { fadeUp, hoverLift } from "@/shared/motion";
+import { AddToCartButton } from "@/features/cart";
+import { Star } from "lucide-react";
 
 export function MenuCard({ item, currency }: { item: MenuItem; currency: string }) {
   const showImage = useFlag("productImages");
   const showAllergens = useFlag("allergenInfo");
   const showCalories = useFlag("calorieInfo");
+  const showStaffPick = useFlag("staffPicker");
+  const cartEnabled = useFlag("cart");
 
   return (
     <motion.article
@@ -16,7 +20,13 @@ export function MenuCard({ item, currency }: { item: MenuItem; currency: string 
       className="group flex flex-col overflow-hidden rounded-[var(--radius)] border border-border bg-card shadow-[var(--shadow-soft)] transition-shadow hover:shadow-[var(--shadow-elev)]"
     >
       {showImage && (
-        <div className="aspect-[16/10] w-full overflow-hidden bg-muted">
+        <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+          {showStaffPick && item.is_featured && (
+            <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary shadow-sm">
+              <Star className="h-3 w-3 fill-primary" />
+              Recomendado
+            </span>
+          )}
           {item.image_url ? (
             <img
               src={item.image_url}
@@ -64,6 +74,16 @@ export function MenuCard({ item, currency }: { item: MenuItem; currency: string 
             </span>
           ))}
         </div>
+        {cartEnabled && (
+          <div className="pt-3">
+            <AddToCartButton
+              id={item.id}
+              name={item.name}
+              priceCents={item.price_cents}
+              imageUrl={item.image_url}
+            />
+          </div>
+        )}
       </div>
     </motion.article>
   );
