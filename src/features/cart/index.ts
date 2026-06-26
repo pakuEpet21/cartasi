@@ -1,5 +1,5 @@
-/**
- * STUB: Cart feature. Gated by the `cart` flag (off by default).
- * Surface the public API here once implemented (CartProvider, useCart, CartDrawer).
- */
-export const __cart_stub = true;
+export { useCart, cartTotalCents, cartCount } from "./store";
+export type { CartItem } from "./store";
+export { AddToCartButton } from "./components/add-to-cart-button";
+export { CartDrawer } from "./components/cart-drawer";
+export { CartTrigger } from "./components/cart-trigger";

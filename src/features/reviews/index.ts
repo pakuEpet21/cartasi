@@ -1,2 +1,3 @@
-/** STUB: gated by `reviews` flag (off by default). */
-export const __reviews_stub = true;
+export { ReviewsSection } from "./components/reviews-section";
+export { getReviews } from "./reviews.functions";
+export type { Review } from "./reviews.functions";

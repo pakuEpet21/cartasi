@@ -5,25 +5,27 @@ import type { FeatureFlags } from "./types";
  * Keep this list in sync with `FlagName`.
  */
 export const DEFAULT_FLAGS: FeatureFlags = {
-  chatbot: false,
-  cart: false,
-  minigame: false,
-  reservations: false,
-  loyaltyProgram: false,
+  // All flags default to ON so the template ships every module visible.
+  // Disable from the admin (or per-restaurant DB row) to remove a feature.
+  chatbot: true,
+  cart: true,
+  minigame: false, // requiere diseño de juego dedicado
+  reservations: true,
+  loyaltyProgram: true,
   menuFilters: true,
   allergenInfo: true,
-  calorieInfo: false,
-  multiLanguage: false,
-  qrMenu: false,
-  tableOrdering: false,
-  deliveryTracking: false,
-  reviews: false,
+  calorieInfo: true,
+  multiLanguage: true,
+  qrMenu: true,
+  tableOrdering: false, // requiere integración POS
+  deliveryTracking: false, // requiere integración carrier
+  reviews: true,
   gallery: true,
   socialLinks: true,
-  whatsappOrder: false,
+  whatsappOrder: true,
   openingHours: true,
-  promotions: false,
-  staffPicker: false,
+  promotions: true,
+  staffPicker: true,
   adminPanel: true,
   productImages: true,
   banner: true,

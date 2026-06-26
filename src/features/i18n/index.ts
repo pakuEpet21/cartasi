@@ -1,2 +1,4 @@
-/** STUB: gated by `multiLanguage` flag (off by default). */
-export const __i18n_stub = true;
+export { useLocale, useT } from "./store";
+export { LanguageToggle } from "./components/language-toggle";
+export { DICT, LOCALES } from "./dict";
+export type { Locale, DictKey } from "./dict";

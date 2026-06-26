@@ -9,9 +9,16 @@ import { IfFlag, useFlag, getRestaurantConfig } from "@/features/flags";
 import { SiteHeader } from "@/shared/components/site-header";
 import { SiteFooter } from "@/shared/components/site-footer";
 import { PromoBanner } from "@/shared/components/promo-banner";
+import { PromoStrip } from "@/shared/components/promo-strip";
 import { Container } from "@/shared/components/container";
 import { fadeUp } from "@/shared/motion";
 import { ACTIVE_RESTAURANT_SLUG } from "@/shared/config";
+import { CartDrawer } from "@/features/cart";
+import { ReservationForm } from "@/features/reservations";
+import { ReviewsSection } from "@/features/reviews";
+import { GallerySection } from "@/features/gallery";
+import { LoyaltyCard } from "@/features/loyalty";
+import { ChatbotWidget } from "@/features/chatbot";
 
 const configQuery = () =>
   queryOptions({
@@ -129,6 +136,41 @@ function HomeReady({ restaurant }: { restaurant: Restaurant }) {
           <div className="mt-8">
             <MenuGrid items={filtered} currency={restaurant.currency} />
           </div>
+
+          <IfFlag name="promotions">
+            {promos.data.length > 1 && (
+              <div className="mt-16">
+                <h2 className="font-display text-2xl sm:text-3xl">Promociones</h2>
+                <div className="mt-4">
+                  <PromoStrip promotions={promos.data.slice(1)} />
+                </div>
+              </div>
+            )}
+          </IfFlag>
+
+          <IfFlag name="gallery">
+            <div className="mt-16">
+              <GallerySection items={menu.data.items} />
+            </div>
+          </IfFlag>
+
+          <IfFlag name="loyaltyProgram">
+            <div className="mt-16">
+              <LoyaltyCard slug={restaurant.slug} />
+            </div>
+          </IfFlag>
+
+          <IfFlag name="reservations">
+            <div className="mt-16">
+              <ReservationForm restaurantId={restaurant.id} />
+            </div>
+          </IfFlag>
+
+          <IfFlag name="reviews">
+            <div className="mt-16">
+              <ReviewsSection restaurantId={restaurant.id} />
+            </div>
+          </IfFlag>
         </Container>
       </main>
       <SiteFooter
@@ -139,6 +181,21 @@ function HomeReady({ restaurant }: { restaurant: Restaurant }) {
         openingHours={hours.data}
         socialLinks={social.data}
       />
+      <IfFlag name="cart">
+        <CartDrawer
+          currency={restaurant.currency}
+          phone={restaurant.phone}
+          restaurantName={restaurant.name}
+        />
+      </IfFlag>
+      <IfFlag name="chatbot">
+        <ChatbotWidget
+          restaurantName={restaurant.name}
+          address={restaurant.address}
+          phone={restaurant.phone}
+          email={restaurant.email}
+        />
+      </IfFlag>
     </div>
   );
 }
