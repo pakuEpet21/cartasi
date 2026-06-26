@@ -1,0 +1,51 @@
+# OpenSpec Configuration — cartasi
+
+## Context
+
+TanStack Start full-stack app for restaurant management (La Bella Tavola). Feature-first architecture with Supabase auth/data, Tailwind v4, shadcn/ui.
+
+## Strict TDD
+
+`false` — No test runner detected.
+
+## Testing Capabilities
+
+| Layer       | Available | Tool |
+| ----------- | --------- | ---- |
+| Unit        | ❌        | —    |
+| Integration | ❌        | —    |
+| E2E         | ❌        | —    |
+
+**Coverage**: Not available.
+
+**Quality Tools**:
+
+| Tool         | Available | Command          |
+| ------------ | --------- | ---------------- |
+| Linter       | ✅        | `bun lint`       |
+| Type checker | ⚠️        | `tsc --noEmit`   |
+| Formatter    | ✅        | `bun format`     |
+
+Note: TypeScript strict mode is enabled in tsconfig.json but no dedicated typecheck script is defined in package.json.
+
+## Phase Rules
+
+| Phase   | Rule |
+| ------- | ---- |
+| propose | Require feature scope, user-facing value |
+| spec    | Cover happy path + edge cases |
+| design  | Show data flow, API contracts |
+| tasks   | Max 2h per task, reviewable in <20 min |
+| apply   | Preserve feature boundaries |
+| verify  | Manual testing acceptable; no CI required |
+| archive | Sync delta specs to openspec/specs |
+
+## Stack
+
+- TanStack Start (React 19 + Vite + TanStack Router file-based routing)
+- Tailwind CSS v4 with `@tailwindcss/vite`
+- shadcn/ui in `src/components/ui`
+- Supabase (auth + data)
+- Bun package manager
+- Zod validation
+- Feature-first under `src/features/*`
