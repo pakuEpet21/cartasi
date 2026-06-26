@@ -1,0 +1,1 @@
+export { GallerySection } from "./components/gallery-section";

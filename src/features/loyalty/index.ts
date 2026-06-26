@@ -1,0 +1,1 @@
+export { LoyaltyCard } from "./components/loyalty-card";
