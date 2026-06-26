@@ -2,6 +2,7 @@ import { useState } from "react";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export function GoogleSignInButton({ redirectTo }: { redirectTo?: string }) {
   const [loading, setLoading] = useState(false);
@@ -41,5 +42,3 @@ export async function signOut() {
   await supabase.auth.signOut();
   window.location.href = "/";
 }
-
-import { supabase } from "@/integrations/supabase/client";
