@@ -510,6 +510,44 @@ export type Database = {
           },
         ]
       }
+      restaurant_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          id: string
+          restaurant_id: string
+          role: Database["public"]["Enums"]["member_role"]
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          restaurant_id: string
+          role?: Database["public"]["Enums"]["member_role"]
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          restaurant_id?: string
+          role?: Database["public"]["Enums"]["member_role"]
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_invitations_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -536,6 +574,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      email_owns_restaurant: {
+        Args: { _email: string }
+        Returns: boolean
+      }
+      get_invitation_by_token: {
+        Args: { _token: string }
+        Returns: {
+          accepted_at: string | null
+          email: string
+          id: string
+          restaurant_id: string
+          role: Database["public"]["Enums"]["member_role"]
+        }[]
+      }
+      get_restaurant_members_with_email: {
+        Args: { _restaurant_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          role: Database["public"]["Enums"]["member_role"]
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -549,6 +611,14 @@ export type Database = {
           _restaurant_id: string
           _roles: Database["public"]["Enums"]["member_role"][]
         }
+        Returns: boolean
+      }
+      user_exists_by_email: {
+        Args: { _email: string }
+        Returns: boolean
+      }
+      user_owns_restaurant: {
+        Args: { _user_id: string }
         Returns: boolean
       }
     }
@@ -568,7 +638,7 @@ export type Database = {
         | "lupin"
         | "molluscs"
         | "peanuts"
-      app_role: "owner" | "admin" | "staff"
+      app_role: "owner" | "admin" | "staff" | "super_admin"
       member_role: "owner" | "admin" | "staff"
     }
     CompositeTypes: {
@@ -713,7 +783,7 @@ export const Constants = {
         "molluscs",
         "peanuts",
       ],
-      app_role: ["owner", "admin", "staff"],
+      app_role: ["owner", "admin", "staff", "super_admin"],
       member_role: ["owner", "admin", "staff"],
     },
   },

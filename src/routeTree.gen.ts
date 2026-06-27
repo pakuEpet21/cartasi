@@ -12,12 +12,16 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminThemeRouteImport } from './routes/_authenticated/admin.theme'
+import { Route as AuthenticatedAdminRestaurantsRouteImport } from './routes/_authenticated/admin/restaurants'
 import { Route as AuthenticatedAdminMenuRouteImport } from './routes/_authenticated/admin.menu'
 import { Route as AuthenticatedAdminFlagsRouteImport } from './routes/_authenticated/admin.flags'
 import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin.categories'
+import { Route as AuthenticatedAdminRestaurantsNewRouteImport } from './routes/_authenticated/admin/restaurants/new'
+import { Route as AuthenticatedAdminRestaurantsIdRouteImport } from './routes/_authenticated/admin/restaurants/$id'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -31,6 +35,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -48,6 +57,12 @@ const AuthenticatedAdminThemeRoute = AuthenticatedAdminThemeRouteImport.update({
   path: '/theme',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminRestaurantsRoute =
+  AuthenticatedAdminRestaurantsRouteImport.update({
+    id: '/restaurants',
+    path: '/restaurants',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminMenuRoute = AuthenticatedAdminMenuRouteImport.update({
   id: '/menu',
   path: '/menu',
@@ -64,25 +79,45 @@ const AuthenticatedAdminCategoriesRoute =
     path: '/categories',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminRestaurantsNewRoute =
+  AuthenticatedAdminRestaurantsNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedAdminRestaurantsRoute,
+  } as any)
+const AuthenticatedAdminRestaurantsIdRoute =
+  AuthenticatedAdminRestaurantsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedAdminRestaurantsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/invite/$token': typeof InviteTokenRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/flags': typeof AuthenticatedAdminFlagsRoute
   '/admin/menu': typeof AuthenticatedAdminMenuRoute
+  '/admin/restaurants': typeof AuthenticatedAdminRestaurantsRouteWithChildren
   '/admin/theme': typeof AuthenticatedAdminThemeRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/restaurants/$id': typeof AuthenticatedAdminRestaurantsIdRoute
+  '/admin/restaurants/new': typeof AuthenticatedAdminRestaurantsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/flags': typeof AuthenticatedAdminFlagsRoute
   '/admin/menu': typeof AuthenticatedAdminMenuRoute
+  '/admin/restaurants': typeof AuthenticatedAdminRestaurantsRouteWithChildren
   '/admin/theme': typeof AuthenticatedAdminThemeRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/restaurants/$id': typeof AuthenticatedAdminRestaurantsIdRoute
+  '/admin/restaurants/new': typeof AuthenticatedAdminRestaurantsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -90,11 +125,15 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/_authenticated/admin/flags': typeof AuthenticatedAdminFlagsRoute
   '/_authenticated/admin/menu': typeof AuthenticatedAdminMenuRoute
+  '/_authenticated/admin/restaurants': typeof AuthenticatedAdminRestaurantsRouteWithChildren
   '/_authenticated/admin/theme': typeof AuthenticatedAdminThemeRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/restaurants/$id': typeof AuthenticatedAdminRestaurantsIdRoute
+  '/_authenticated/admin/restaurants/new': typeof AuthenticatedAdminRestaurantsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -102,37 +141,50 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/invite/$token'
     | '/admin/categories'
     | '/admin/flags'
     | '/admin/menu'
+    | '/admin/restaurants'
     | '/admin/theme'
     | '/admin/'
+    | '/admin/restaurants/$id'
+    | '/admin/restaurants/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/invite/$token'
     | '/admin/categories'
     | '/admin/flags'
     | '/admin/menu'
+    | '/admin/restaurants'
     | '/admin/theme'
     | '/admin'
+    | '/admin/restaurants/$id'
+    | '/admin/restaurants/new'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
+    | '/invite/$token'
     | '/_authenticated/admin/categories'
     | '/_authenticated/admin/flags'
     | '/_authenticated/admin/menu'
+    | '/_authenticated/admin/restaurants'
     | '/_authenticated/admin/theme'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/restaurants/$id'
+    | '/_authenticated/admin/restaurants/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  InviteTokenRoute: typeof InviteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -158,6 +210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -177,6 +236,13 @@ declare module '@tanstack/react-router' {
       path: '/theme'
       fullPath: '/admin/theme'
       preLoaderRoute: typeof AuthenticatedAdminThemeRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/restaurants': {
+      id: '/_authenticated/admin/restaurants'
+      path: '/restaurants'
+      fullPath: '/admin/restaurants'
+      preLoaderRoute: typeof AuthenticatedAdminRestaurantsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/menu': {
@@ -200,13 +266,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCategoriesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/restaurants/new': {
+      id: '/_authenticated/admin/restaurants/new'
+      path: '/new'
+      fullPath: '/admin/restaurants/new'
+      preLoaderRoute: typeof AuthenticatedAdminRestaurantsNewRouteImport
+      parentRoute: typeof AuthenticatedAdminRestaurantsRoute
+    }
+    '/_authenticated/admin/restaurants/$id': {
+      id: '/_authenticated/admin/restaurants/$id'
+      path: '/$id'
+      fullPath: '/admin/restaurants/$id'
+      preLoaderRoute: typeof AuthenticatedAdminRestaurantsIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRestaurantsRoute
+    }
   }
 }
+
+interface AuthenticatedAdminRestaurantsRouteChildren {
+  AuthenticatedAdminRestaurantsIdRoute: typeof AuthenticatedAdminRestaurantsIdRoute
+  AuthenticatedAdminRestaurantsNewRoute: typeof AuthenticatedAdminRestaurantsNewRoute
+}
+
+const AuthenticatedAdminRestaurantsRouteChildren: AuthenticatedAdminRestaurantsRouteChildren =
+  {
+    AuthenticatedAdminRestaurantsIdRoute: AuthenticatedAdminRestaurantsIdRoute,
+    AuthenticatedAdminRestaurantsNewRoute:
+      AuthenticatedAdminRestaurantsNewRoute,
+  }
+
+const AuthenticatedAdminRestaurantsRouteWithChildren =
+  AuthenticatedAdminRestaurantsRoute._addFileChildren(
+    AuthenticatedAdminRestaurantsRouteChildren,
+  )
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCategoriesRoute: typeof AuthenticatedAdminCategoriesRoute
   AuthenticatedAdminFlagsRoute: typeof AuthenticatedAdminFlagsRoute
   AuthenticatedAdminMenuRoute: typeof AuthenticatedAdminMenuRoute
+  AuthenticatedAdminRestaurantsRoute: typeof AuthenticatedAdminRestaurantsRouteWithChildren
   AuthenticatedAdminThemeRoute: typeof AuthenticatedAdminThemeRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
@@ -215,6 +313,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCategoriesRoute: AuthenticatedAdminCategoriesRoute,
   AuthenticatedAdminFlagsRoute: AuthenticatedAdminFlagsRoute,
   AuthenticatedAdminMenuRoute: AuthenticatedAdminMenuRoute,
+  AuthenticatedAdminRestaurantsRoute:
+    AuthenticatedAdminRestaurantsRouteWithChildren,
   AuthenticatedAdminThemeRoute: AuthenticatedAdminThemeRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
@@ -237,6 +337,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  InviteTokenRoute: InviteTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

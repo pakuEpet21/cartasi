@@ -2,8 +2,9 @@ import { createFileRoute, Outlet, Link, useRouterState } from "@tanstack/react-r
 import { signOut } from "@/features/auth";
 import { Container } from "@/shared/components/container";
 import { cn } from "@/lib/utils";
+import { useSuperAdmin } from "@/features/restaurants";
 
-const NAV: { to: string; label: string }[] = [
+const NAV_BASE: { to: string; label: string }[] = [
   { to: "/admin", label: "Inicio" },
   { to: "/admin/menu", label: "Platos" },
   { to: "/admin/categories", label: "Categorías" },
@@ -13,16 +14,19 @@ const NAV: { to: string; label: string }[] = [
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
-    meta: [
-      { title: "Panel — La Bella Tavola" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "Panel — La Bella Tavola" }, { name: "robots", content: "noindex" }],
   }),
   component: AdminLayout,
 });
 
 function AdminLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { isSuperAdmin } = useSuperAdmin();
+
+  const navItems = isSuperAdmin
+    ? [...NAV_BASE, { to: "/admin/restaurants", label: "Restaurantes" }]
+    : NAV_BASE;
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
@@ -41,7 +45,7 @@ function AdminLayout() {
       <Container className="flex flex-col gap-6 py-8 sm:flex-row">
         <aside className="sm:w-56 shrink-0">
           <nav className="flex flex-row gap-1 overflow-x-auto sm:flex-col">
-            {NAV.map((n) => (
+            {navItems.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
