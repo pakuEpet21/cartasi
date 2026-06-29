@@ -3,6 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { resolveFlags } from "./defaults";
 import type { FeatureFlags } from "./types";
+import staticFlags from "./features.json";
+
+// Flags managed statically via features.json (not DB feature_flags)
+const STATIC_FLAGS = ["reviews", "socialLinks", "openingHours"] as const;
+type StaticFlag = (typeof STATIC_FLAGS)[number];
 
 export type RestaurantConfig = {
   restaurant: {
@@ -36,8 +41,9 @@ function publicClient() {
 export const getRestaurantConfig = createServerFn({ method: "GET" })
   .inputValidator((input: { slug: string }) => input)
   .handler(async ({ data }): Promise<RestaurantConfig> => {
+    console.log("[getRestaurantConfig] slug:", data.slug);
     const sb = publicClient();
-    const { data: restaurant } = await sb
+    const { data: restaurant, error } = await sb
       .from("restaurants")
       .select(
         "id,slug,name,tagline,description,logo_url,cover_url,locale,currency,address,phone,email,theme",
@@ -45,6 +51,7 @@ export const getRestaurantConfig = createServerFn({ method: "GET" })
       .eq("slug", data.slug)
       .eq("is_active", true)
       .maybeSingle();
+    console.log("[getRestaurantConfig] restaurant:", restaurant, "error:", error);
 
     if (!restaurant) {
       return { restaurant: null, flags: resolveFlags(null) };
@@ -56,8 +63,21 @@ export const getRestaurantConfig = createServerFn({ method: "GET" })
       .eq("restaurant_id", restaurant.id)
       .maybeSingle();
 
+    const dbFlags = resolveFlags((flagRow?.flags as Partial<FeatureFlags> | null) ?? null);
+
+    // Override static flags with features.json values
+    const staticOverrides: Partial<FeatureFlags> = {};
+    for (const flag of STATIC_FLAGS) {
+      const restaurantOverrides = staticFlags.restaurants?.[data.slug as keyof typeof staticFlags.restaurants];
+      if (restaurantOverrides && flag in restaurantOverrides) {
+        (staticOverrides as Record<string, boolean>)[flag] = (restaurantOverrides as Record<string, boolean>)[flag]!;
+      } else if (flag in staticFlags.defaults) {
+        (staticOverrides as Record<string, boolean>)[flag] = staticFlags.defaults[flag as keyof typeof staticFlags.defaults]!;
+      }
+    }
+
     return {
       restaurant: { ...restaurant, theme: restaurant.theme ?? {} },
-      flags: resolveFlags((flagRow?.flags as Partial<FeatureFlags> | null) ?? null),
+      flags: { ...dbFlags, ...staticOverrides },
     };
   });

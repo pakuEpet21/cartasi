@@ -29,11 +29,13 @@ Design tokens como **canales HSL** en `src/styles.css`, mapeados a Tailwind v4 v
 
 ## Datos (Supabase)
 
-Tablas multi-tenant: `restaurants`, `restaurant_members`, `user_roles`, `feature_flags`, `categories`, `menu_items`, `promotions`, `opening_hours`, `social_links`, `reservations`, `reviews`. RLS activado; helpers `SECURITY DEFINER` (`is_restaurant_member`, `has_role`) evitan recursividad en las policies.
+Tablas multi-tenant: `restaurants`, `restaurant_members`, `user_roles`, `feature_flags`, `categories`, `menu_items`, `promotions`, `reservations`. RLS activado; helpers `SECURITY DEFINER` (`is_restaurant_member`, `has_role`) evitan recursividad en las policies.
+
+> **Nota**: `opening_hours`, `social_links` y `reviews` fueron eliminados de la BD. Se manejan estáticamente via `features.json` para simplificar el schema.
 
 ## Server Functions
 
-- Públicas: `getRestaurantConfig`, `getMenu`, `getPromotions`, `getOpeningHours`, `getSocialLinks`.
+- Públicas: `getRestaurantConfig`, `getMenu`, `getPromotions`.
 - Privadas: `upsertMenuItem`, `deleteMenuItem`, `upsertCategory`, `deleteCategory`, `updateFlags`, `updateTheme` (middleware `attachSupabaseAuth` + check de membresía).
 
 ## Auth
@@ -60,6 +62,6 @@ Google OAuth vía Supabase. `<GoogleSignInButton />` en `/auth`. El layout `_aut
 - CRUD UI completo para platos, categorías, promos, horarios, redes.
 - Editor visual de tema con preview en vivo.
 - Supabase Storage para imágenes (flag `productImages`).
-- Carrito, WhatsApp order, reservas, reviews (stubs en `features/`).
+- Carrito, WhatsApp order, reservas (stubs en `features/`).
 - i18n cuando se active `multiLanguage`.
 - Server routes para `sitemap.xml` y `robots.txt`.

@@ -2,9 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
-import type {
-  Allergen, Category, MenuItem, OpeningHour, Promotion, SocialLink,
-} from "./types";
+import type { Allergen, Category, MenuItem, Promotion } from "./types";
 
 function pub() {
   return createClient<Database>(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
@@ -42,23 +40,4 @@ export const getPromotions = createServerFn({ method: "GET" })
     return (rows ?? []) as Promotion[];
   });
 
-export const getOpeningHours = createServerFn({ method: "GET" })
-  .inputValidator((i) => RestaurantId.parse(i))
-  .handler(async ({ data }): Promise<OpeningHour[]> => {
-    const sb = pub();
-    const { data: rows } = await sb.from("opening_hours")
-      .select("weekday,opens,closes,is_closed")
-      .eq("restaurant_id", data.restaurantId).order("weekday");
-    return (rows ?? []) as OpeningHour[];
-  });
-
-export const getSocialLinks = createServerFn({ method: "GET" })
-  .inputValidator((i) => RestaurantId.parse(i))
-  .handler(async ({ data }): Promise<SocialLink[]> => {
-    const sb = pub();
-    const { data: rows } = await sb.from("social_links")
-      .select("id,platform,url").eq("restaurant_id", data.restaurantId).order("position");
-    return (rows ?? []) as SocialLink[];
-  });
-
-export type { Allergen, Category, MenuItem, OpeningHour, Promotion, SocialLink };
+export type { Allergen, Category, MenuItem, Promotion };

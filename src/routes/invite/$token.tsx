@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/invite/$token")({
   head: () => ({
-    meta: [{ title: "Invitación — La Bella Tavola" }],
+    meta: [{ title: "Invitación — CartaSI" }],
   }),
   ssr: false,
   component: InvitePage,
@@ -109,7 +109,7 @@ function InvitePage() {
         <div className="space-y-2">
           <h1 className="font-display text-2xl">Has sido invitado</h1>
           <p className="text-sm text-muted-foreground">
-            Te han invitado a unirte a un restaurante en La Bella Tavola.
+            Te han invitado a unirte a un restaurante en CartaSI.
           </p>
         </div>
 

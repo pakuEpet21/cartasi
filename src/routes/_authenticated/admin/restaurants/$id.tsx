@@ -1,11 +1,12 @@
 /**
  * Super Admin Restaurant Management — Restaurant detail page
- * PR 3: Admin UI
+ * Super admin only.
  */
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeftIcon } from "lucide-react";
 import { RestaurantDetail } from "@/features/restaurants/components/restaurant-detail";
+import { useSuperAdmin } from "@/features/restaurants";
 
 export const Route = createFileRoute("/_authenticated/admin/restaurants/$id")({
   head: () => ({
@@ -15,7 +16,27 @@ export const Route = createFileRoute("/_authenticated/admin/restaurants/$id")({
 });
 
 function RestaurantDetailPage() {
+  const { isSuperAdmin, isLoading } = useSuperAdmin();
   const { id } = Route.useParams();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-muted-foreground">Verificando permisos...</p>
+      </div>
+    );
+  }
+
+  if (!isSuperAdmin) {
+    return (
+      <div className="rounded-[var(--radius)] border border-destructive/50 bg-destructive/10 p-8 text-center">
+        <h2 className="font-display text-xl text-destructive">Solo super admin</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          No tienes permisos para acceder a esta seccion.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -29,7 +50,7 @@ function RestaurantDetailPage() {
         <div>
           <h1 className="font-display text-2xl">Detalle del restaurante</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Información, miembros e invitaciones
+            Informacion, miembros e invitaciones
           </p>
         </div>
       </div>

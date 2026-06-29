@@ -71,7 +71,7 @@ export function CreateRestaurantForm() {
               <FormLabel>Nombre del restaurante</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="La Bella Tavola"
+                  placeholder="Mi Restaurante"
                   {...field}
                   onChange={(e) => {
                     field.onChange(e);
@@ -93,7 +93,7 @@ export function CreateRestaurantForm() {
             <FormItem>
               <FormLabel>Slug (URL)</FormLabel>
               <FormControl>
-                <Input placeholder="la-bella-tavola" {...field} />
+                <Input placeholder="mi-restaurante" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

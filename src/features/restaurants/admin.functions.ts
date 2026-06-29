@@ -125,6 +125,16 @@ export const createRestaurant = createServerFn({ method: "POST" })
       throw new Error(error?.message ?? "Failed to create restaurant");
     }
 
+    // Insert empty feature_flags row for the new restaurant
+    const { error: flagsError } = await supabaseAdmin
+      .from("feature_flags")
+      .insert({ restaurant_id: row.id, flags: {} });
+
+    if (flagsError) {
+      // Log but don't fail - the restaurant was created successfully
+      console.error("[createRestaurant] Failed to insert feature_flags:", flagsError.message);
+    }
+
     return { id: row.id };
   });
 
@@ -137,7 +147,7 @@ export const listRestaurants = createServerFn({ method: "GET" })
     const { page, pageSize } = data;
     const offset = (page - 1) * pageSize;
 
-    const [{ data: items, error }, { count }] = await Promise.all([
+    const [{ data: items, error }, { count, error: countError }] = await Promise.all([
       supabaseAdmin
         .from("restaurants")
         .select("*, restaurant_members(count)")
@@ -146,8 +156,13 @@ export const listRestaurants = createServerFn({ method: "GET" })
       supabaseAdmin.from("restaurants").select("id", { count: "exact", head: true }),
     ]);
 
+    console.log("[listRestaurants] items:", items, "error:", error, "countError:", countError);
+
     if (error) {
       throw new Error(error.message);
+    }
+    if (countError) {
+      throw new Error(countError.message);
     }
 
     return {

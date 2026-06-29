@@ -42,16 +42,3 @@ export type Promotion = {
   cta_label: string | null;
   cta_url: string | null;
 };
-
-export type OpeningHour = {
-  weekday: number;
-  opens: string | null;
-  closes: string | null;
-  is_closed: boolean;
-};
-
-export type SocialLink = {
-  id: string;
-  platform: string;
-  url: string;
-};

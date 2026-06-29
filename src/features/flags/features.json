@@ -1,0 +1,9 @@
+{
+  "$schema": "./schema.json",
+  "restaurants": {},
+  "defaults": {
+    "reviews": false,
+    "socialLinks": false,
+    "openingHours": true
+  }
+}

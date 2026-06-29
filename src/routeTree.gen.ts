@@ -17,7 +17,9 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminThemeRouteImport } from './routes/_authenticated/admin.theme'
 import { Route as AuthenticatedAdminRestaurantsRouteImport } from './routes/_authenticated/admin/restaurants'
+import { Route as AuthenticatedAdminMenuViewRouteImport } from './routes/_authenticated/admin.menu-view'
 import { Route as AuthenticatedAdminMenuRouteImport } from './routes/_authenticated/admin.menu'
+import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin.members'
 import { Route as AuthenticatedAdminFlagsRouteImport } from './routes/_authenticated/admin.flags'
 import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin.categories'
 import { Route as AuthenticatedAdminRestaurantsNewRouteImport } from './routes/_authenticated/admin/restaurants/new'
@@ -63,11 +65,23 @@ const AuthenticatedAdminRestaurantsRoute =
     path: '/restaurants',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminMenuViewRoute =
+  AuthenticatedAdminMenuViewRouteImport.update({
+    id: '/menu-view',
+    path: '/menu-view',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminMenuRoute = AuthenticatedAdminMenuRouteImport.update({
   id: '/menu',
   path: '/menu',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminMembersRoute =
+  AuthenticatedAdminMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminFlagsRoute = AuthenticatedAdminFlagsRouteImport.update({
   id: '/flags',
   path: '/flags',
@@ -99,7 +113,9 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/flags': typeof AuthenticatedAdminFlagsRoute
+  '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/menu': typeof AuthenticatedAdminMenuRoute
+  '/admin/menu-view': typeof AuthenticatedAdminMenuViewRoute
   '/admin/restaurants': typeof AuthenticatedAdminRestaurantsRouteWithChildren
   '/admin/theme': typeof AuthenticatedAdminThemeRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -112,7 +128,9 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/flags': typeof AuthenticatedAdminFlagsRoute
+  '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/menu': typeof AuthenticatedAdminMenuRoute
+  '/admin/menu-view': typeof AuthenticatedAdminMenuViewRoute
   '/admin/restaurants': typeof AuthenticatedAdminRestaurantsRouteWithChildren
   '/admin/theme': typeof AuthenticatedAdminThemeRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -128,7 +146,9 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/_authenticated/admin/flags': typeof AuthenticatedAdminFlagsRoute
+  '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRoute
   '/_authenticated/admin/menu': typeof AuthenticatedAdminMenuRoute
+  '/_authenticated/admin/menu-view': typeof AuthenticatedAdminMenuViewRoute
   '/_authenticated/admin/restaurants': typeof AuthenticatedAdminRestaurantsRouteWithChildren
   '/_authenticated/admin/theme': typeof AuthenticatedAdminThemeRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -144,7 +164,9 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/admin/categories'
     | '/admin/flags'
+    | '/admin/members'
     | '/admin/menu'
+    | '/admin/menu-view'
     | '/admin/restaurants'
     | '/admin/theme'
     | '/admin/'
@@ -157,7 +179,9 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/admin/categories'
     | '/admin/flags'
+    | '/admin/members'
     | '/admin/menu'
+    | '/admin/menu-view'
     | '/admin/restaurants'
     | '/admin/theme'
     | '/admin'
@@ -172,7 +196,9 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/_authenticated/admin/categories'
     | '/_authenticated/admin/flags'
+    | '/_authenticated/admin/members'
     | '/_authenticated/admin/menu'
+    | '/_authenticated/admin/menu-view'
     | '/_authenticated/admin/restaurants'
     | '/_authenticated/admin/theme'
     | '/_authenticated/admin/'
@@ -245,11 +271,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRestaurantsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/menu-view': {
+      id: '/_authenticated/admin/menu-view'
+      path: '/menu-view'
+      fullPath: '/admin/menu-view'
+      preLoaderRoute: typeof AuthenticatedAdminMenuViewRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/menu': {
       id: '/_authenticated/admin/menu'
       path: '/menu'
       fullPath: '/admin/menu'
       preLoaderRoute: typeof AuthenticatedAdminMenuRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/members': {
+      id: '/_authenticated/admin/members'
+      path: '/members'
+      fullPath: '/admin/members'
+      preLoaderRoute: typeof AuthenticatedAdminMembersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/flags': {
@@ -303,7 +343,9 @@ const AuthenticatedAdminRestaurantsRouteWithChildren =
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCategoriesRoute: typeof AuthenticatedAdminCategoriesRoute
   AuthenticatedAdminFlagsRoute: typeof AuthenticatedAdminFlagsRoute
+  AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
   AuthenticatedAdminMenuRoute: typeof AuthenticatedAdminMenuRoute
+  AuthenticatedAdminMenuViewRoute: typeof AuthenticatedAdminMenuViewRoute
   AuthenticatedAdminRestaurantsRoute: typeof AuthenticatedAdminRestaurantsRouteWithChildren
   AuthenticatedAdminThemeRoute: typeof AuthenticatedAdminThemeRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -312,7 +354,9 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCategoriesRoute: AuthenticatedAdminCategoriesRoute,
   AuthenticatedAdminFlagsRoute: AuthenticatedAdminFlagsRoute,
+  AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
   AuthenticatedAdminMenuRoute: AuthenticatedAdminMenuRoute,
+  AuthenticatedAdminMenuViewRoute: AuthenticatedAdminMenuViewRoute,
   AuthenticatedAdminRestaurantsRoute:
     AuthenticatedAdminRestaurantsRouteWithChildren,
   AuthenticatedAdminThemeRoute: AuthenticatedAdminThemeRoute,

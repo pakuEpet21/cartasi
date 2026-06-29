@@ -1,0 +1,1 @@
+[] reducir la base de datos,quitar horarios reviews, que se agreguen si se necesitan luego

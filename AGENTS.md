@@ -8,18 +8,17 @@
 
 ## Package manager
 
-- `bun.lock` and `pnpm-lock.yaml` both exist; `bunfig.toml` is present. Prefer **`bun install`** unless you have a reason to use pnpm.
-- The `bunfig.toml` enforces a 24 h `minimumReleaseAge`; Lovable packages are excluded.
+- pnpm
 
 ## Developer commands
 
 ```bash
-bun dev          # start dev server
-bun build        # production build
-bun build:dev    # development build
-bun preview      # preview production build
-bun lint         # eslint .
-bun format       # prettier --write .
+pnpm dev          # start dev server
+pnpm build        # production build
+pnpm build:dev    # development build
+pnpm preview      # preview production build
+pnpm lint         # eslint .
+pnpm format       # prettier --write .
 ```
 
 There is no test/typecheck script.
@@ -77,8 +76,8 @@ Rule: **never import internal files from another feature**. Use each feature’s
 `src/shared/config.ts` contains the active tenant:
 
 ```ts
-export const ACTIVE_RESTAURANT_SLUG = "la-bella-tavola";
-export const SITE_NAME = "La Bella Tavola";
+export const ACTIVE_RESTAURANT_SLUG = "mi-restaurante";
+export const SITE_NAME = "CartaSI";
 ```
 
 ## Styling / theming

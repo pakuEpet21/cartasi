@@ -26,10 +26,10 @@ Routes (orquestan) → Features (UI + lógica) → Shared (utilidades)
 
 ### Clave: el `slug`
 
-Cada restaurante se identifica por un `slug` único (ej: `la-bella-tavola`). La app está configurada en `src/shared/config.ts` para usar un slug específico:
+Cada restaurante se identifica por un `slug` único (ej: `mi-restaurante`). La app está configurada en `src/shared/config.ts` para usar un slug específico:
 
 ```ts
-export const ACTIVE_RESTAURANT_SLUG = "la-bella-tavola";
+export const ACTIVE_RESTAURANT_SLUG = "mi-restaurante";
 ```
 
 **Importante**: El `slug` que insertes en la base de datos DEBE coincidir con este valor.
@@ -48,10 +48,7 @@ restaurants (restaurante central)
   │     └── menu_items (platos)
   │           └── menu_images (galería de fotos)
   ├── promotions (promociones)
-  ├── opening_hours (horarios semanales)
-  ├── social_links (redes sociales)
-  ├── reservations (reservas de clientes)
-  └── reviews (reseñas)
+  └── reservations (reservas de clientes)
 ```
 
 ### Enums
@@ -114,12 +111,11 @@ restaurants (restaurante central)
 | Tabla | Descripción |
 |---|---|
 | `restaurant_members` | Vincula usuarios auth al restaurante con un rol |
-| `feature_flags` | 23 toggles de funcionalidades por restaurante |
+| `feature_flags` | 20 toggles de funcionalidades por restaurante |
 | `promotions` | Banners promocionales con fechas |
-| `opening_hours` | Horario semanal (weekday 0-6) |
-| `social_links` | Plataforma + URL |
 | `reservations` | Reservas de clientes (anon puede INSERT) |
-| `reviews` | Reseñas (anon puede INSERT, requiere aprobación) |
+
+> **Nota**: `opening_hours`, `social_links` y `reviews` fueron eliminados del schema. Se manejan estáticamente via `features.json`.
 
 ---
 
@@ -139,8 +135,8 @@ Abre el SQL Editor de Supabase y ejecuta:
 INSERT INTO public.restaurants (
   slug, name, tagline, description, locale, currency, address, phone, email
 ) VALUES (
-  'la-bella-tavola',
-  'La Bella Tavola',
+  'mi-restaurante',
+  'Mi Restaurante',
   'Cocina italiana de autor',
   'Una experiencia gastronómica única donde la tradición italiana se encuentra con la innovación contemporánea.',
   'es',
@@ -170,7 +166,7 @@ Reemplaza `<TU-UUID>` con tu UUID real:
 INSERT INTO public.restaurant_members (restaurant_id, user_id, role)
 SELECT id, '<TU-UUID>'::uuid, 'owner'::member_role
 FROM public.restaurants
-WHERE slug = 'la-bella-tavola'
+WHERE slug = 'mi-restaurante'
 ON CONFLICT (restaurant_id, user_id) DO NOTHING;
 ```
 
@@ -180,7 +176,7 @@ ON CONFLICT (restaurant_id, user_id) DO NOTHING;
 
 ## 6. Paso 3: Feature Flags (ya configurados)
 
-La migración 3 ya configuró los flags para `la-bella-tavola`. Si necesitas recrearlos:
+La migración 3 ya configuró los flags para `mi-restaurante`. Si necesitas recrearlos:
 
 ```sql
 INSERT INTO public.feature_flags (restaurant_id, flags)
@@ -197,11 +193,8 @@ SELECT id, '{
   "qrMenu": true,
   "tableOrdering": false,
   "deliveryTracking": false,
-  "reviews": true,
   "gallery": true,
-  "socialLinks": true,
   "whatsappOrder": true,
-  "openingHours": true,
   "promotions": true,
   "staffPicker": true,
   "adminPanel": true,
@@ -210,9 +203,11 @@ SELECT id, '{
   "search": true
 }'::jsonb
 FROM public.restaurants
-WHERE slug = 'la-bella-tavola'
+WHERE slug = 'mi-restaurante'
 ON CONFLICT (restaurant_id) DO NOTHING;
 ```
+
+> **Nota**: `reviews`, `socialLinks` y `openingHours` ya no se almacenan en `feature_flags`; se gestionan estáticamente via `features.json`.
 
 ---
 
@@ -244,7 +239,7 @@ DO $$
 DECLARE
   v_restaurant_id UUID;
 BEGIN
-  SELECT id INTO v_restaurant_id FROM public.restaurants WHERE slug = 'la-bella-tavola';
+  SELECT id INTO v_restaurant_id FROM public.restaurants WHERE slug = 'mi-restaurante';
 
   INSERT INTO public.categories (restaurant_id, name, slug, position) VALUES
     (v_restaurant_id, 'Entrantes', 'entrantes', 1),
@@ -272,7 +267,7 @@ DECLARE
   v_postres_id UUID;
   v_bebidas_id UUID;
 BEGIN
-  SELECT id INTO v_restaurant_id FROM public.restaurants WHERE slug = 'la-bella-tavola';
+  SELECT id INTO v_restaurant_id FROM public.restaurants WHERE slug = 'mi-restaurante';
   SELECT id INTO v_entrantes_id FROM public.categories WHERE slug = 'entrantes' AND restaurant_id = v_restaurant_id;
   SELECT id INTO v_principales_id FROM public.categories WHERE slug = 'principales' AND restaurant_id = v_restaurant_id;
   SELECT id INTO v_pizzas_id FROM public.categories WHERE slug = 'pizzas' AND restaurant_id = v_restaurant_id;
@@ -325,61 +320,14 @@ END $$;
 
 ---
 
-## 10. Paso 7: Datos de soporte
-
-### 10.1 Horarios de apertura
+## 10. Paso 7: Promociones
 
 ```sql
 DO $$
 DECLARE
   v_restaurant_id UUID;
 BEGIN
-  SELECT id INTO v_restaurant_id FROM public.restaurants WHERE slug = 'la-bella-tavola';
-
-  -- Lunes a viernes: 12:00-16:00 y 19:00-23:00
-  INSERT INTO public.opening_hours (restaurant_id, weekday, opens, closes, is_closed) VALUES
-    (v_restaurant_id, 1, '12:00', '16:00', false),  -- Lunes
-    (v_restaurant_id, 1, '19:00', '23:00', false),
-    (v_restaurant_id, 2, '12:00', '16:00', false),  -- Martes
-    (v_restaurant_id, 2, '19:00', '23:00', false),
-    (v_restaurant_id, 3, '12:00', '16:00', false),  -- Miércoles
-    (v_restaurant_id, 3, '19:00', '23:00', false),
-    (v_restaurant_id, 4, '12:00', '16:00', false),  -- Jueves
-    (v_restaurant_id, 4, '19:00', '23:00', false),
-    (v_restaurant_id, 5, '12:00', '16:00', false),  -- Viernes
-    (v_restaurant_id, 5, '19:00', '00:00', false),
-    (v_restaurant_id, 6, '12:00', '16:00', false),  -- Sábado
-    (v_restaurant_id, 6, '19:00', '00:00', false),
-    (v_restaurant_id, 0, NULL, NULL, true)            -- Domingo: cerrado
-  ON CONFLICT DO NOTHING;
-END $$;
-```
-
-### 10.2 Redes sociales
-
-```sql
-DO $$
-DECLARE
-  v_restaurant_id UUID;
-BEGIN
-  SELECT id INTO v_restaurant_id FROM public.restaurants WHERE slug = 'la-bella-tavola';
-
-  INSERT INTO public.social_links (restaurant_id, platform, url, position) VALUES
-    (v_restaurant_id, 'instagram', 'https://instagram.com/labellatavola', 1),
-    (v_restaurant_id, 'facebook', 'https://facebook.com/labellatavola', 2),
-    (v_restaurant_id, 'tiktok', 'https://tiktok.com/@labellatavola', 3)
-  ON CONFLICT DO NOTHING;
-END $$;
-```
-
-### 10.3 Promociones
-
-```sql
-DO $$
-DECLARE
-  v_restaurant_id UUID;
-BEGIN
-  SELECT id INTO v_restaurant_id FROM public.restaurants WHERE slug = 'la-bella-tavola';
+  SELECT id INTO v_restaurant_id FROM public.restaurants WHERE slug = 'mi-restaurante';
 
   INSERT INTO public.promotions (restaurant_id, title, body, cta_label, cta_url, starts_at, ends_at, position) VALUES
     (v_restaurant_id, 'Menú del Día', 'Consulta nuestro menú del día de lunes a viernes por solo 15€', 'Ver menú', '/#menu', now(), now() + interval '30 days', 1),
@@ -397,8 +345,6 @@ END $$;
    - Header con nombre del restaurante
    - Sección de menú organizada por categorías
    - Promociones destacadas
-   - Horarios de apertura
-   - Redes sociales
    - Footer con información de contacto
 
 ---
@@ -409,20 +355,20 @@ END $$;
 
 ```sql
 -- Verificar restaurante
-SELECT * FROM public.restaurants WHERE slug = 'la-bella-tavola';
+SELECT * FROM public.restaurants WHERE slug = 'mi-restaurante';
 
 -- Ver menú completo con categorías
 SELECT c.name AS categoria, m.name AS plato, m.price_cents / 100.0 AS precio_eur
 FROM public.menu_items m
 JOIN public.categories c ON c.id = m.category_id
-WHERE m.restaurant_id = (SELECT id FROM public.restaurants WHERE slug = 'la-bella-tavola')
+WHERE m.restaurant_id = (SELECT id FROM public.restaurants WHERE slug = 'mi-restaurante')
 ORDER BY c.position, m.position;
 
 -- Ver miembros
 SELECT rm.role, u.email
 FROM public.restaurant_members rm
 JOIN auth.users u ON u.id = rm.user_id
-WHERE rm.restaurant_id = (SELECT id FROM public.restaurants WHERE slug = 'la-bella-tavola');
+WHERE rm.restaurant_id = (SELECT id FROM public.restaurants WHERE slug = 'mi-restaurante');
 ```
 
 ### Actualizar datos
@@ -430,20 +376,20 @@ WHERE rm.restaurant_id = (SELECT id FROM public.restaurants WHERE slug = 'la-bel
 ```sql
 -- Cambiar nombre del restaurante
 UPDATE public.restaurants
-SET name = 'La Bella Tavola - Nuevo Nombre'
-WHERE slug = 'la-bella-tavola';
+SET name = 'Mi Restaurante - Nuevo Nombre'
+WHERE slug = 'mi-restaurante';
 
 -- Desactivar un plato
 UPDATE public.menu_items
 SET is_active = false
 WHERE slug = 'bruschetta-classica'
-  AND restaurant_id = (SELECT id FROM public.restaurants WHERE slug = 'la-bella-tavola');
+  AND restaurant_id = (SELECT id FROM public.restaurants WHERE slug = 'mi-restaurante');
 
 -- Cambiar precio (12.50€ = 1250 céntimos)
 UPDATE public.menu_items
 SET price_cents = 1250
 WHERE slug = 'pizza-margherita'
-  AND restaurant_id = (SELECT id FROM public.restaurants WHERE slug = 'la-bella-tavola');
+  AND restaurant_id = (SELECT id FROM public.restaurants WHERE slug = 'mi-restaurante');
 ```
 
 ### Eliminar datos
@@ -452,12 +398,12 @@ WHERE slug = 'pizza-margherita'
 -- Eliminar un plato
 DELETE FROM public.menu_items
 WHERE slug = 'bruschetta-classica'
-  AND restaurant_id = (SELECT id FROM public.restaurants WHERE slug = 'la-bella-tavola');
+  AND restaurant_id = (SELECT id FROM public.restaurants WHERE slug = 'mi-restaurante');
 
 -- Eliminar una categoría (los platos asociados se desvinculan por SET NULL)
 DELETE FROM public.categories
 WHERE slug = 'bebidas'
-  AND restaurant_id = (SELECT id FROM public.restaurants WHERE slug = 'la-bella-tavola');
+  AND restaurant_id = (SELECT id FROM public.restaurants WHERE slug = 'mi-restaurante');
 ```
 
 ---

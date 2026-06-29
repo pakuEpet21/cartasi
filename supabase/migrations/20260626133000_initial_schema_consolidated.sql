@@ -1,6 +1,11 @@
+-- CartaSI initial schema (consolidated)
+-- No seed data. No opening_hours, social_links, or reviews tables.
+
+-- ============ SCHEMA PERMISSIONS ============
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 
 -- ============ ENUMS ============
-CREATE TYPE public.app_role AS ENUM ('owner', 'admin', 'staff');
+CREATE TYPE public.app_role AS ENUM ('owner', 'admin', 'staff', 'super_admin');
 CREATE TYPE public.member_role AS ENUM ('owner', 'admin', 'staff');
 CREATE TYPE public.allergen AS ENUM ('gluten','lactose','nuts','egg','fish','shellfish','soy','sesame','celery','mustard','sulphites','lupin','molluscs','peanuts');
 
@@ -54,7 +59,11 @@ ALTER TABLE public.restaurants ENABLE ROW LEVEL SECURITY;
 CREATE TRIGGER trg_restaurants_updated BEFORE UPDATE ON public.restaurants FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 CREATE POLICY "restaurants public read active" ON public.restaurants FOR SELECT TO anon USING (is_active = true);
-CREATE POLICY "restaurants auth read" ON public.restaurants FOR SELECT TO authenticated USING (true);
+CREATE POLICY "restaurants auth read active" ON public.restaurants FOR SELECT TO authenticated USING (is_active = true);
+CREATE POLICY "restaurants super admin all" ON public.restaurants
+  FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'super_admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'super_admin'));
 
 -- ============ restaurant_members ============
 CREATE TABLE public.restaurant_members (
@@ -69,26 +78,34 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.restaurant_members TO authenticat
 GRANT ALL ON public.restaurant_members TO service_role;
 ALTER TABLE public.restaurant_members ENABLE ROW LEVEL SECURITY;
 
--- security definer to avoid RLS recursion
 CREATE OR REPLACE FUNCTION public.is_member_of(_restaurant_id UUID)
 RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (
-    SELECT 1 FROM public.restaurant_members
-    WHERE restaurant_id = _restaurant_id AND user_id = auth.uid()
+    SELECT 1
+    FROM public.restaurant_members rm
+    JOIN public.restaurants r ON r.id = rm.restaurant_id
+    WHERE rm.restaurant_id = _restaurant_id
+      AND rm.user_id = auth.uid()
+      AND r.is_active = true
   )
 $$;
 
 CREATE OR REPLACE FUNCTION public.is_member_with_role(_restaurant_id UUID, _roles public.member_role[])
 RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (
-    SELECT 1 FROM public.restaurant_members
-    WHERE restaurant_id = _restaurant_id
-      AND user_id = auth.uid()
-      AND role = ANY(_roles)
+    SELECT 1
+    FROM public.restaurant_members rm
+    JOIN public.restaurants r ON r.id = rm.restaurant_id
+    WHERE rm.restaurant_id = _restaurant_id
+      AND rm.user_id = auth.uid()
+      AND rm.role = ANY(_roles)
+      AND r.is_active = true
   )
 $$;
 
-CREATE POLICY "members read own" ON public.restaurant_members FOR SELECT TO authenticated USING (user_id = auth.uid() OR public.is_member_of(restaurant_id));
+CREATE POLICY "members super admin read" ON public.restaurant_members
+  FOR SELECT TO authenticated
+  USING (public.has_role(auth.uid(), 'super_admin') OR user_id = auth.uid());
 CREATE POLICY "members owner manage" ON public.restaurant_members FOR ALL TO authenticated
   USING (public.is_member_with_role(restaurant_id, ARRAY['owner']::public.member_role[]))
   WITH CHECK (public.is_member_with_role(restaurant_id, ARRAY['owner']::public.member_role[]));
@@ -107,9 +124,9 @@ CREATE TRIGGER trg_flags_updated BEFORE UPDATE ON public.feature_flags FOR EACH 
 
 CREATE POLICY "flags public read" ON public.feature_flags FOR SELECT TO anon USING (true);
 CREATE POLICY "flags auth read" ON public.feature_flags FOR SELECT TO authenticated USING (true);
-CREATE POLICY "flags members write" ON public.feature_flags FOR ALL TO authenticated
-  USING (public.is_member_with_role(restaurant_id, ARRAY['owner','admin']::public.member_role[]))
-  WITH CHECK (public.is_member_with_role(restaurant_id, ARRAY['owner','admin']::public.member_role[]));
+CREATE POLICY "flags super admin write" ON public.feature_flags FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'super_admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'super_admin'));
 
 -- ============ categories ============
 CREATE TABLE public.categories (
@@ -217,45 +234,6 @@ CREATE POLICY "promos members write" ON public.promotions FOR ALL TO authenticat
   USING (public.is_member_with_role(restaurant_id, ARRAY['owner','admin']::public.member_role[]))
   WITH CHECK (public.is_member_with_role(restaurant_id, ARRAY['owner','admin']::public.member_role[]));
 
--- ============ opening_hours ============
-CREATE TABLE public.opening_hours (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
-  weekday SMALLINT NOT NULL CHECK (weekday BETWEEN 0 AND 6),
-  opens TIME,
-  closes TIME,
-  is_closed BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-GRANT SELECT ON public.opening_hours TO anon;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.opening_hours TO authenticated;
-GRANT ALL ON public.opening_hours TO service_role;
-ALTER TABLE public.opening_hours ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "hours public read" ON public.opening_hours FOR SELECT TO anon USING (true);
-CREATE POLICY "hours auth read" ON public.opening_hours FOR SELECT TO authenticated USING (true);
-CREATE POLICY "hours members write" ON public.opening_hours FOR ALL TO authenticated
-  USING (public.is_member_with_role(restaurant_id, ARRAY['owner','admin']::public.member_role[]))
-  WITH CHECK (public.is_member_with_role(restaurant_id, ARRAY['owner','admin']::public.member_role[]));
-
--- ============ social_links ============
-CREATE TABLE public.social_links (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
-  platform TEXT NOT NULL,
-  url TEXT NOT NULL,
-  position INT NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-GRANT SELECT ON public.social_links TO anon;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.social_links TO authenticated;
-GRANT ALL ON public.social_links TO service_role;
-ALTER TABLE public.social_links ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "social public read" ON public.social_links FOR SELECT TO anon USING (true);
-CREATE POLICY "social auth read" ON public.social_links FOR SELECT TO authenticated USING (true);
-CREATE POLICY "social members write" ON public.social_links FOR ALL TO authenticated
-  USING (public.is_member_with_role(restaurant_id, ARRAY['owner','admin']::public.member_role[]))
-  WITH CHECK (public.is_member_with_role(restaurant_id, ARRAY['owner','admin']::public.member_role[]));
-
 -- ============ reservations ============
 CREATE TABLE public.reservations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -273,29 +251,130 @@ GRANT INSERT ON public.reservations TO anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.reservations TO authenticated;
 GRANT ALL ON public.reservations TO service_role;
 ALTER TABLE public.reservations ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "reservations public insert" ON public.reservations FOR INSERT TO anon WITH CHECK (true);
+CREATE POLICY "reservations public insert" ON public.reservations FOR INSERT TO anon
+  WITH CHECK (
+    party_size BETWEEN 1 AND 30
+    AND slot_at > now()
+    AND length(name) BETWEEN 1 AND 120
+  );
 CREATE POLICY "reservations members read" ON public.reservations FOR SELECT TO authenticated USING (public.is_member_of(restaurant_id));
 CREATE POLICY "reservations members write" ON public.reservations FOR ALL TO authenticated
   USING (public.is_member_with_role(restaurant_id, ARRAY['owner','admin','staff']::public.member_role[]))
   WITH CHECK (public.is_member_with_role(restaurant_id, ARRAY['owner','admin','staff']::public.member_role[]));
 
--- ============ reviews ============
-CREATE TABLE public.reviews (
+-- ============ restaurant_invitations ============
+CREATE TABLE public.restaurant_invitations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
-  author TEXT NOT NULL,
-  rating SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
-  body TEXT,
-  is_approved BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  email TEXT NOT NULL,
+  role public.member_role NOT NULL DEFAULT 'owner',
+  token UUID NOT NULL DEFAULT gen_random_uuid(),
+  accepted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (restaurant_id, email)
 );
-GRANT SELECT, INSERT ON public.reviews TO anon;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.reviews TO authenticated;
-GRANT ALL ON public.reviews TO service_role;
-ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "reviews public read approved" ON public.reviews FOR SELECT TO anon USING (is_approved = true);
-CREATE POLICY "reviews public insert" ON public.reviews FOR INSERT TO anon WITH CHECK (true);
-CREATE POLICY "reviews members read" ON public.reviews FOR SELECT TO authenticated USING (true);
-CREATE POLICY "reviews members write" ON public.reviews FOR ALL TO authenticated
-  USING (public.is_member_with_role(restaurant_id, ARRAY['owner','admin']::public.member_role[]))
-  WITH CHECK (public.is_member_with_role(restaurant_id, ARRAY['owner','admin']::public.member_role[]));
+CREATE INDEX idx_restaurant_invitations_token ON public.restaurant_invitations(token);
+CREATE INDEX idx_restaurant_invitations_email ON public.restaurant_invitations(email);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.restaurant_invitations TO authenticated;
+GRANT ALL ON public.restaurant_invitations TO service_role;
+ALTER TABLE public.restaurant_invitations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "invitations super admin all" ON public.restaurant_invitations
+  FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'super_admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'super_admin'));
+
+-- ============ helper functions ============
+CREATE OR REPLACE FUNCTION public.user_owns_restaurant(_user_id UUID)
+RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.restaurant_members
+    WHERE user_id = _user_id AND role = 'owner'
+  )
+$$;
+
+CREATE OR REPLACE FUNCTION public.user_exists_by_email(_email TEXT)
+RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, auth AS $$
+  SELECT EXISTS (SELECT 1 FROM auth.users WHERE email = _email)
+$$;
+
+CREATE OR REPLACE FUNCTION public.email_owns_restaurant(_email TEXT)
+RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, auth AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.restaurant_members rm
+    JOIN auth.users u ON u.id = rm.user_id
+    WHERE u.email = _email AND rm.role = 'owner'
+  )
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_restaurant_members_with_email(_restaurant_id UUID)
+RETURNS TABLE(id UUID, user_id UUID, email TEXT, role public.member_role, created_at TIMESTAMPTZ)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, auth AS $$
+  SELECT rm.id, rm.user_id, u.email, rm.role, rm.created_at
+  FROM public.restaurant_members rm
+  JOIN auth.users u ON u.id = rm.user_id
+  WHERE rm.restaurant_id = _restaurant_id
+  ORDER BY rm.created_at DESC;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_invitation_by_token(_token UUID)
+RETURNS TABLE(id UUID, restaurant_id UUID, email TEXT, role public.member_role, accepted_at TIMESTAMPTZ)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT i.id, i.restaurant_id, i.email, i.role, i.accepted_at
+  FROM public.restaurant_invitations i
+  WHERE i.token = _token;
+$$;
+
+CREATE OR REPLACE FUNCTION public.handle_new_user_invitations()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  inv RECORD;
+BEGIN
+  SELECT * INTO inv
+  FROM public.restaurant_invitations
+  WHERE email = NEW.email AND accepted_at IS NULL
+  ORDER BY created_at ASC
+  LIMIT 1;
+
+  IF FOUND THEN
+    IF inv.role = 'owner' AND public.user_owns_restaurant(NEW.id) THEN
+      RETURN NEW;
+    END IF;
+
+    INSERT INTO public.restaurant_members (restaurant_id, user_id, role)
+    VALUES (inv.restaurant_id, NEW.id, inv.role)
+    ON CONFLICT (restaurant_id, user_id) DO UPDATE SET role = EXCLUDED.role;
+
+    UPDATE public.restaurant_invitations
+    SET accepted_at = now()
+    WHERE id = inv.id;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_auth_users_invitation ON auth.users;
+CREATE TRIGGER trg_auth_users_invitation
+AFTER INSERT ON auth.users
+FOR EACH ROW
+EXECUTE FUNCTION public.handle_new_user_invitations();
+
+-- Restrict SECURITY DEFINER helpers: only authenticated callers
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.is_member_of(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.is_member_with_role(uuid, public.member_role[]) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_member_of(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_member_with_role(uuid, public.member_role[]) TO authenticated, service_role;
+
+GRANT EXECUTE ON FUNCTION public.user_owns_restaurant(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.user_exists_by_email(text) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.email_owns_restaurant(text) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.get_restaurant_members_with_email(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.get_invitation_by_token(uuid) TO anon, authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.user_owns_restaurant(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.user_exists_by_email(text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.email_owns_restaurant(text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.get_restaurant_members_with_email(uuid) FROM PUBLIC, anon;

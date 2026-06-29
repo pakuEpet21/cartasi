@@ -1,6 +1,6 @@
 import { IfFlag } from "@/features/flags";
 import { Container } from "./container";
-import type { OpeningHour, SocialLink } from "@/features/menu";
+import type { StaticOpeningHour, StaticSocialLink } from "@/shared/config/restaurant-static";
 import { formatTime, weekdayLabel } from "@/shared/lib/format";
 
 export function SiteFooter({
@@ -15,8 +15,8 @@ export function SiteFooter({
   address: string | null;
   phone: string | null;
   email: string | null;
-  openingHours: OpeningHour[];
-  socialLinks: SocialLink[];
+  openingHours: StaticOpeningHour[];
+  socialLinks: StaticSocialLink[];
 }) {
   return (
     <footer id="contacto" className="mt-20 border-t border-border bg-card">

@@ -2,7 +2,7 @@
 
 ## Context
 
-TanStack Start full-stack app for restaurant management (La Bella Tavola). Feature-first architecture with Supabase auth/data, Tailwind v4, shadcn/ui.
+TanStack Start full-stack app for restaurant management. Feature-first architecture with Supabase auth/data, Tailwind v4, shadcn/ui.
 
 ## Strict TDD
 

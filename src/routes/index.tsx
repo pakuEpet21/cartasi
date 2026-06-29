@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
-  getMenu, getPromotions, getOpeningHours, getSocialLinks,
+  getMenu, getPromotions,
   MenuGrid, MenuSearch, CategoryTabs, AllergenFilter, useFilteredMenu,
 } from "@/features/menu";
 import { IfFlag, useFlag, getRestaurantConfig } from "@/features/flags";
@@ -12,7 +12,8 @@ import { PromoBanner } from "@/shared/components/promo-banner";
 import { PromoStrip } from "@/shared/components/promo-strip";
 import { Container } from "@/shared/components/container";
 import { fadeUp } from "@/shared/motion";
-import { ACTIVE_RESTAURANT_SLUG } from "@/shared/config";
+import { ACTIVE_RESTAURANT_SLUG, SITE_NAME } from "@/shared/config";
+import { STATIC_OPENING_HOURS, STATIC_SOCIAL_LINKS } from "@/shared/config/restaurant-static";
 import { CartDrawer } from "@/features/cart";
 import { ReservationForm } from "@/features/reservations";
 import { ReviewsSection } from "@/features/reviews";
@@ -29,41 +30,43 @@ const menuQuery = (id: string) =>
   queryOptions({ queryKey: ["menu", id], queryFn: () => getMenu({ data: { restaurantId: id } }) });
 const promosQuery = (id: string) =>
   queryOptions({ queryKey: ["promotions", id], queryFn: () => getPromotions({ data: { restaurantId: id } }) });
-const hoursQuery = (id: string) =>
-  queryOptions({ queryKey: ["hours", id], queryFn: () => getOpeningHours({ data: { restaurantId: id } }) });
-const socialQuery = (id: string) =>
-  queryOptions({ queryKey: ["social", id], queryFn: () => getSocialLinks({ data: { restaurantId: id } }) });
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(configQuery());
+    console.log("[loader] ACTIVE_RESTAURANT_SLUG:", ACTIVE_RESTAURANT_SLUG);
+    const cfg = await getRestaurantConfig({ data: { slug: ACTIVE_RESTAURANT_SLUG } });
+    console.log("[loader] config:", cfg);
+    // Ensure the query cache has the same data the server just rendered,
+    // otherwise the client may hydrate with stale cached data and mismatch.
+    context.queryClient.setQueryData(configQuery().queryKey, cfg);
+    return cfg;
   },
-  head: () => ({
-    meta: [
-      { title: "Carta — La Bella Tavola" },
-      {
-        name: "description",
-        content:
-          "Descubre nuestra carta de cocina italiana: entrantes, pastas, principales y postres con producto de temporada.",
-      },
-      { property: "og:title", content: "Carta — La Bella Tavola" },
-      { property: "og:description", content: "Cocina italiana de autor en el corazón de la ciudad." },
-      { property: "og:url", content: "/" },
-    ],
-    links: [{ rel: "canonical", href: "/" }],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Restaurant",
-          name: "La Bella Tavola",
-          servesCuisine: "Italian",
-          priceRange: "€€",
-        }),
-      },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const name = loaderData.restaurant?.name ?? SITE_NAME;
+    return {
+      meta: [
+        { title: `${name} — Carta` },
+        {
+          name: "description",
+          content: `Descubre la carta de ${name}.`,
+        },
+        { property: "og:title", content: `${name} — Carta` },
+        { property: "og:description", content: `Carta digital de ${name}.` },
+        { property: "og:url", content: "/" },
+      ],
+      links: [{ rel: "canonical", href: "/" }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Restaurant",
+            name,
+          }),
+        },
+      ],
+    };
+  },
   component: HomePage,
 });
 
@@ -85,8 +88,6 @@ type Restaurant = NonNullable<Awaited<ReturnType<typeof getRestaurantConfig>>["r
 function HomeReady({ restaurant }: { restaurant: Restaurant }) {
   const menu = useSuspenseQuery(menuQuery(restaurant.id));
   const promos = useSuspenseQuery(promosQuery(restaurant.id));
-  const hours = useSuspenseQuery(hoursQuery(restaurant.id));
-  const social = useSuspenseQuery(socialQuery(restaurant.id));
   const showFilters = useFlag("menuFilters");
   const showSearch = useFlag("search");
 
@@ -178,8 +179,8 @@ function HomeReady({ restaurant }: { restaurant: Restaurant }) {
         address={restaurant.address}
         phone={restaurant.phone}
         email={restaurant.email}
-        openingHours={hours.data}
-        socialLinks={social.data}
+        openingHours={STATIC_OPENING_HOURS}
+        socialLinks={STATIC_SOCIAL_LINKS}
       />
       <IfFlag name="cart">
         <CartDrawer

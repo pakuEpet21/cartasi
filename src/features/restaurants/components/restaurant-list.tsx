@@ -3,7 +3,7 @@
  * PR 3: Admin UI
  */
 
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { listRestaurants } from "@/features/restaurants";
@@ -26,7 +26,8 @@ interface RestaurantListProps {
 }
 
 export function RestaurantList({ page = 1, pageSize = 20 }: RestaurantListProps) {
-  const { data, isLoading, isError } = useQuery({
+  const navigate = useNavigate();
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["super-admin", "restaurants", page, pageSize],
     queryFn: () => listRestaurants({ data: { page, pageSize } }),
   });
@@ -42,7 +43,16 @@ export function RestaurantList({ page = 1, pageSize = 20 }: RestaurantListProps)
   }
 
   if (isError || !data) {
-    return <p className="text-sm text-destructive">Error al cargar los restaurantes.</p>;
+    return (
+      <div className="space-y-2">
+        <p className="text-sm text-destructive">Error al cargar los restaurantes.</p>
+        {error && (
+          <pre className="rounded-md bg-muted p-3 text-xs text-muted-foreground overflow-auto">
+            {error instanceof Error ? error.message : String(error)}
+          </pre>
+        )}
+      </div>
+    );
   }
 
   const { items, total } = data;
@@ -51,11 +61,12 @@ export function RestaurantList({ page = 1, pageSize = 20 }: RestaurantListProps)
     return (
       <div className="rounded-md border border-dashed border-border bg-card p-8 text-center">
         <p className="text-sm text-muted-foreground">No hay restaurantes registrados.</p>
-        <Button asChild className="mt-4">
-          <Link to="/admin/restaurants/new">
-            <PlusIcon className="size-4" data-icon="inline-start" />
-            Crear restaurante
-          </Link>
+        <Button
+          className="mt-4"
+          onClick={() => navigate({ to: "/admin/restaurants/new" })}
+        >
+          <PlusIcon className="size-4" data-icon="inline-start" />
+          Crear restaurante
         </Button>
       </div>
     );
@@ -67,11 +78,9 @@ export function RestaurantList({ page = 1, pageSize = 20 }: RestaurantListProps)
         <p className="text-sm text-muted-foreground">
           {total} restaurante{total !== 1 ? "s" : ""}
         </p>
-        <Button asChild>
-          <Link to="/admin/restaurants/new">
-            <PlusIcon className="size-4" data-icon="inline-start" />
-            Nuevo
-          </Link>
+        <Button onClick={() => navigate({ to: "/admin/restaurants/new" })}>
+          <PlusIcon className="size-4" data-icon="inline-start" />
+          Nuevo
         </Button>
       </div>
 
@@ -98,6 +107,7 @@ export function RestaurantList({ page = 1, pageSize = 20 }: RestaurantListProps)
 }
 
 function RestaurantRow({ restaurant }: { restaurant: Restaurant }) {
+  const navigate = useNavigate();
   const memberCount =
     (restaurant as unknown as { restaurant_members: { count: number }[] }).restaurant_members?.[0]
       ?.count ?? 0;
@@ -105,13 +115,13 @@ function RestaurantRow({ restaurant }: { restaurant: Restaurant }) {
   return (
     <TableRow>
       <TableCell className="font-medium">
-        <Link
-          to="/admin/restaurants/$id"
-          params={{ id: restaurant.id }}
-          className="hover:underline"
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/admin/restaurants/$id", params: { id: restaurant.id } })}
+          className="hover:underline text-left"
         >
           {restaurant.name}
-        </Link>
+        </button>
       </TableCell>
       <TableCell>
         <span className="text-muted-foreground font-mono text-xs">{restaurant.slug}</span>
@@ -127,10 +137,12 @@ function RestaurantRow({ restaurant }: { restaurant: Restaurant }) {
       <TableCell className="text-right">
         <div className="flex items-center justify-end gap-2">
           <ToggleStatusButton restaurant={restaurant} />
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/restaurants/$id" params={{ id: restaurant.id }}>
-              Ver
-            </Link>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate({ to: "/admin/restaurants/$id", params: { id: restaurant.id } })}
+          >
+            Ver
           </Button>
         </div>
       </TableCell>
